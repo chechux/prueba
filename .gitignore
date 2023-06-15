@@ -1,0 +1,583 @@
+node_modules
+app.js
+
+
+const express = require("express")
+const morgan = require("morgan")
+const {engine} = require("express-handlebars")
+const path = require("path")
+const passport = require("passport")
+require("dotenv").congif()
+const session = require("express-session")
+const flash= require("connect-flash")
+//const mysqlStore = require("express-mysql-session")
+
+//const {database} = require("./keys")
+
+
+const app = express()
+require("./lib/passport")
+
+
+app.set("port", process.env.PORT || 3000)
+app.set("views" ,path.join(__dirname,"views"))
+
+app.engine(".hbs", engine({
+    defaultLayout: "main",
+    layoutsDir:path.join(app.get("views"), "layouts"),
+    partialsDir: path.join(app.get("views"), "partials"),
+    extname: ".hbs",
+}))
+
+
+app.set("view engine" ,".hbs")
+
+
+app.use(session({
+    secret:"fazt",
+    resave: false,
+    saveUninitialized: false,
+    // store: new mysqlStore(database)
+}))
+
+app.use(flash())
+app.use(morgan("dev"))
+app.use(express.urlencoded({extended:false}))
+app.use(express.json())
+app.use(passport.initialize())
+app.use(passport.session())
+
+app.use((req,res,next)=>{
+    app.locals.success = req.flash("success")
+    app.locals.message = req.flash("message")
+    app.locals.user = req.user
+    next();
+})
+
+
+
+app.use(require("./routes/index"))
+
+
+
+
+app.use(express.static(path.join(__dirname, "public")))
+
+
+app.listen(app.get("port"), ()=>{
+    console.log("listening")
+} )
+-------------------------------------------------------------
+
+---navigation:
+
+
+
+<nav class="navbar navbar-expand-lg bg-light">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/">Home</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav">
+      {{#if user}}
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="/links">links</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/links/add">add link</a>
+        </li>
+        <li class="nav-item">
+          <a href="/profile" class="nav-link">Profile</a>
+        </li>
+        <li class="nav-item">
+          <a href="/logout" class="nav-link">Cerrar sesion</a>
+        </li>
+      {{else}}
+          <li class="nav-item">
+            <a href="/signin" class="nav-item">Signin</a>
+          </li>
+          <li class="nav-item">
+            <a href="/signup" class="nav-item">Signup</a>
+          </li>
+      {{/if}}
+
+      </ul>
+    </div>
+  </div>
+</nav>
+--------------------------------------------------------------------------------
+
+
+
+---main.hbs:
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Links App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    
+    {{> navigation}}
+
+
+    {{#if success}}
+        <div class="container p-4">
+            <div class="row">
+                <div class="col-md-4 mx-auto">
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        {{success}}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {{/if}}
+
+
+    {{#if message}}
+        <div class="container p-4">
+            <div class="row">
+                <div class="col-md-4 mx-auto">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        {{message}}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {{/if}}
+
+    {{{ body }}}
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js" integrity="sha384-fbbOQedDUMZZ5KreZpsbe1LCZPVmfTnH7ois6mU1QK+m14rQ1l2bGBq41eYeM/fS" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+</body>
+</html>
+-------------------------------------------------------------------------------------------
+
+
+
+---dentro de links.js es solo rutas de añadir borrar editar:
+
+
+
+const express = require("express")
+const router = express.Router()
+
+const pool = require("../database")
+const {isLoggedIn} = require("../lib/auth")
+
+
+router.get("/",(req,res)=>{
+    res.render("index")
+})
+
+
+module.exports = router
+--------------------------------------------------------------------
+
+---añadir:
+
+router.get("/add",(req,res)=>{
+    res.render("links/add")
+})
+
+
+router.post("/add", async (req,res)=>{
+    const { title, url, description} = req.body
+    const newLink = {
+        title,
+        url,
+        description,
+	user_id: req.user.id
+    }
+    await pool.query("INSERT INTO links set ?", [newLink])
+    res.redirect("/links")
+})
+
+
+
+---formulario para añadir:
+
+
+
+<div class="container p-4">
+    <div class="row">
+        <div class="col-md-4 mx-auto">
+            <div class="card">
+                <div class="card-body">
+                    <form action="/add" method="POST">
+                        <div class="form-group">
+                            <input type="text" class="form-control" name="title" placeholder="Titulo..." autofocus>    
+                        </div>
+                        <div class="form-group">
+                            <input type="url" class="form-control" name="url" placeholder="Url...">
+                        </div>
+                        <div class="form-group"><textarea name="description" rows="12" class="form-control" placeholder="Descripción..."></textarea></div>
+                        <div class="form-group"> <button class="btn btn-success btn-block">Guardar</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+---------------------------------------------------------------------------------
+ 
+
+---mostrar:
+
+
+
+router.get("/list", async (req,res)=>{
+    const fotos = await pool.query("SELECT * FROM fotos") //WHERE user_id = ?", [req.user.id])
+    res.render("links/list", {fotos})
+})
+
+
+
+---formulario para mostrar:
+
+
+
+<div class="container p-4">
+    <div class="row">
+        {{#each fotos}}
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <a href="{{url}}" target="_blank">
+                            <h3 class="card-title text-uppercase">
+                                {{titulo}}
+                            </h3>
+                        </a>
+                        <p class="m-2">{{description}}</p>
+                        <p></p>
+                        <a href="/delete/{{id}}" class="btn btn-danger">Delete link</a>
+                        <a href="/edit/{{id}}" class="btn btn-secondary">Edit</a>
+
+                        <a href="/megusta/{{id}}">me gusta</a>
+                        <a href="/nomegusta/{{id}}">no me gusta</a>
+                        <a href="/favoritos/{{id}}">Añadir a favoritos</a>
+
+                        <p>likes:{{likes}}</p>
+                        <p>dislikes:{{dislikes}}</p>
+                    </div>
+                </div>
+            </div>
+        {{else}}
+            <div class="col-md-4 mx-auto">
+                <div class="card card-body text-center">
+                    <p>no hay links</p>
+                    <a href="/add">Crea uno</a>
+                </div>
+            </div>
+        {{/each}}
+
+    </div>
+</div>
+
+-------------------------------------------------------------------
+
+---eliminar:
+
+
+
+
+
+router.get("/delete/:id", async (req,res) =>{
+    const {id} = req.params
+    await pool.query("DELETE FROM links WHERE id = ?", [id] )
+    res.redirect("/list")
+})
+-----------------------------------------------------
+
+----editar:
+
+
+
+router.get("/edit/:id", async (req,res) =>{
+    const {id} = req.params
+    const links = await pool.query("SELECT * FROM links WHERE id = ?", [id])
+    res.render("links/edit",{link: links[0]} )
+
+})
+
+router.post("/edit/:id", async (req,res)=>{
+    const {id} = req.params
+    const { title, url, description} = req.body
+    const newLink = {
+        title,
+        url,
+        description
+    }
+    await pool.query("UPDATE links set ? WHERE id = ?" , [newLink, id])
+    res.redirect("/list")
+
+
+
+---formulario para editar:
+
+
+
+
+
+
+<div class="container p-4">
+    <div class="row">
+        <div class="col-md-4 mx-auto">
+            <div class="card">
+                <div class="card-body">
+                    <form action="/edit/{{link.id}}" method="POST">
+                        <div class="form-group">
+                            <input type="text" value="{{link.title}}" class="form-control" name="title" placeholder="Titulo..." autofocus>    
+                        </div>
+                        <div class="form-group">
+                            <input type="url" value="{{link.url}}" class="form-control" name="url" placeholder="Url...">
+                        </div>
+                        <div class="form-group"><textarea name="description" rows="12" class="form-control" placeholder="Descripción..."> {{link.description}}</textarea></div>
+                        <div class="form-group"> <button class="btn btn-success btn-block">Guardar</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+----------------------------------------------------------
+
+
+})
+
+
+
+----------------------LOGIN--------------------------
+
+---dentro de routes creas authentication.js:
+
+
+
+
+
+const express = require("express")
+const router = express.Router()
+
+
+const {isLoggedIn} = require("../lib/auth") //poner a profile
+
+router.get("/signup",(req,res) =>{
+    res.render("auth/signup")
+})
+
+router.post("/signup", passport.authenticate("local.signup",{
+        successRedirect:"/signin",
+        failureRedirect:"/signup",
+        failureFlash:true
+}))
+
+
+
+
+
+
+
+router.get("/signin",(req,res)=>{
+    res.render("auth/signin")
+})
+
+
+router.post("/signin",(req,res,next) => {
+    passport.authenticate("local.signin",{
+        successRedirect:"/profile",
+        failureRedirect:"/signin",
+        successFlash:true
+    })(req,res,next)
+})
+
+
+
+
+router.get("/profile",(req,res)=>{
+    res.send("auth/profile")
+})
+
+router.get("/logout", (req, res, next) => {
+    req.logOut(req.user, err => {
+        if(err) return next(err);
+        res.redirect("/signin");  
+    });
+});
+
+module.exports = router
+
+
+
+
+
+---vista singin:
+
+
+
+<div class="container p-4">
+    <div class="row">
+        <div class="col-md-4 mx-auto">
+            <div class="card text-center">
+                <div class="card-header">
+                    <h3>signin</h3>
+                </div>
+                <div class="card-body">
+                    <img src="/img/logo.png" class="card-img-top mx-auto m-2 rounded-circle w-50" alt="">
+                    <form action="/signin" method="POST">
+                        <div class="form-group">
+                            <input type="text" name="username" placeholder="username..." class="form-control" autofocus>
+                        </div>
+                        <div class="form-group">
+                            <input type="password" name="password" class="form-control" placeholder="contraseña...">
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-success btn-block">Login</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+para el singup practicamente igual cambia el form
+
+
+
+
+--------------------------------------------------------------------------------------------------------
+
+----dentro de lib creas passport.js:
+
+
+
+const passport = require("passport")
+const localStrategy = require("passport-local").Strategy
+
+const pool  = require("../database")
+
+passport.use("local.signin", new localStrategy({
+    usernameField:"username",
+    passwordField:"password",
+    passReqToCallback: true
+}, async ( req,username,password,done)=>{
+    
+    const rows = await pool.query("SELECT * FROM users WHERE username = ?",[username])
+    if(rows.length > 0 ) {
+        const user = rows[0]
+        if (user.password === password){
+            done(null,user,req.flash("success", "welcome" + user.username))
+        }else{
+            done(null, false, req.flash("message", "contra incorrecta"))
+        }
+    }else{
+        return done(null, false, req.flash("message", "el ususario no existe"))
+    }
+
+}))
+
+passport.use("local.signup", new localStrategy({
+    usernameField:"username",
+    passwordField:"password",
+    passReqToCallback: true
+}, async (req, username, password, done) =>{
+
+    const newUser = {
+        username,
+        password
+    }
+
+    const result = await pool.query("INSERT INTO users SET ?", [newUser])
+    newUser.id = result.insertId
+    return done(null, newUser)
+}))
+
+passport.serializeUser((user, done)=>{
+    done(null, user.id)
+})
+
+passport.deserializeUser(async(id, done)=>{
+    const rows = await pool.query("SELECT * FROM users WHERE id = ?", [id])
+    done(null, rows[0])
+
+})
+---------------------------------------------------------------------------------------------
+
+-----dentro de lib creas auth.js:
+
+module.exports = {
+    isLoggedIn(req,res,next){
+        if(req.isAuthenticated()){
+            return next()
+        }
+        return res.redirect("/signin")
+    }
+}
+
+
+---y el metodo isloggedin lo pones en todas las rutas de links.js y esto
+const {isLoggedIn} = require("../lib/auth")
+
+router.get("/", isLoggedIn,  async (req,res)=>{
+
+---------------------------------------------------------------------------------------------------
+
+---creas index.hbs que sera la vista principal a la altura de las carpetas:
+
+
+
+<main class="index">
+    <header class="masterhead d-flex">
+        <div class="container text-center my-auto">
+            <h1 class="mb-1">Favorites links</h1>
+            <h3 class="mb-5">
+                <em>Store your fav links</em>
+            </h3>
+            <a href="/signin" class="btn btn-secondary">lets started</a>
+            
+        </div>
+
+    </header>
+</main>
+
+
+---------------------------------------------------------------------
+---creas profile.hbs a la alyura de index.hbs:
+
+
+<div class="container p-4">
+    <div class="row">
+        <div class="col-md-4 mx-auto">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3>Welcome {{user.username}}</h3>
+                    <a href="links">SAve links</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
